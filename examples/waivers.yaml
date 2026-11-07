@@ -1,0 +1,6 @@
+waivers:
+  - finding_id: group_overlap:customer_id
+    owner: nama.pemilik@bank.example
+    approved_by: nama.model.risk@bank.example
+    reason: "Satu nasabah dengan beberapa produk; dampak diukur dan dinilai tidak material"
+    expires: 2027-02-28

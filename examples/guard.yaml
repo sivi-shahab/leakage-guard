@@ -1,0 +1,49 @@
+version: 1
+model_id: abc-scoring-pd-v3
+
+data:
+  train: data/leaky_train.parquet      # relatif terhadap lokasi berkas ini
+  test: data/leaky_test.parquet
+  target: default_flag
+  entity_col: customer_id
+  time_col: application_date
+  index_col: application_id
+  pii_columns: [nik, npwp, nama, no_rekening]
+
+prediction:
+  prediction_date_col: application_date
+  embargo_days: 30
+  maturity_window_days: 365
+
+blocklist:
+  forbidden_columns: [kolektibilitas_akhir, dpd_max_post, status_writeoff]
+  suspicious_name_patterns: [default, kolek, dpd, npl, write_off, restruct, recovery]
+
+thresholds:
+  row_overlap:      { warn_pct: 0.0, crit_pct: 1.0 }
+  temporal:         { warn_pct: 0.0, crit_pct: 5.0 }
+  single_feature:   { warn: 0.85, crit: 0.95 }
+  pps:              { warn: 0.5,  crit: 0.8 }
+  identifier_label: { warn: 0.1,  crit: 0.2 }
+  adversarial:      { warn: 0.70, crit: 0.95 }
+
+runtime:
+  max_rows: 100000
+  seed: 42
+
+gate:
+  fail_on: [CRITICAL]
+  waivers_file: waivers.yaml
+
+report:
+  language: id
+  require_owner_assessment: true
+
+# Milestone 1: hanya detektor builtin yang tersedia.
+detectors:
+  enabled: [builtin]
+  allow_missing: false
+
+privacy:
+  quasi_identifier_columns: [kode_pos]
+  min_group_size: 5
