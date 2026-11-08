@@ -1,0 +1,7 @@
+.venv
+.envs
+examples/data
+leakage-guard-out
+__pycache__
+.git
+tests

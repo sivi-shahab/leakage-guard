@@ -7,6 +7,7 @@ import logging
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from datetime import UTC, date, datetime
@@ -21,7 +22,7 @@ from leakage_guard import __version__
 from leakage_guard.aggregator import aggregate
 from leakage_guard.config import GuardConfig
 from leakage_guard.detectors.base import DetectorContext, get_detector
-from leakage_guard.gate import exit_code
+from leakage_guard.gate import GateHook, exit_code
 from leakage_guard.models import DetectorError, Metric, RawFinding, Report, Severity, Waiver
 from leakage_guard.preflight import PreflightResult, run_preflight, write_clean_copies
 from leakage_guard.reasons.catalog import THRESHOLD_BASIS
@@ -144,6 +145,7 @@ def run_guard(
     *,
     run_at: datetime | None = None,
     today: date | None = None,
+    hooks: Sequence[GateHook] = (),
 ) -> tuple[Report, int]:
     """Preflight, detect, aggregate, gate, and write reports.
 
@@ -166,4 +168,6 @@ def run_guard(
     )
     write_json(report, out_dir / "report.json")
     write_markdown(report, out_dir / "report.md")
+    for hook in hooks:
+        hook.on_gate(report, code)
     return report, code

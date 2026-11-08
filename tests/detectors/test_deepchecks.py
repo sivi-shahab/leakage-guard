@@ -54,3 +54,10 @@ def test_no_html_when_disabled(write_cfg: Callable[..., Path], tmp_path: Path) -
     )
     att = tmp_path / "att"
     assert not att.exists() or not list(att.glob("*.html"))
+
+
+def test_pin_warning_silent_in_pinned_env(caplog: pytest.LogCaptureFixture) -> None:
+    from leakage_guard.detectors.deepchecks_detector import warn_if_pins_unmet
+
+    warn_if_pins_unmet()
+    assert "pins not met" not in caplog.text

@@ -214,3 +214,19 @@ def test_missing_detector_follows_allow_missing(
     assert main(["run", "--config", str(lax), "--out", str(tmp_path / "l")]) == 0
     rep = json.loads((tmp_path / "l" / "report.json").read_text())
     assert "detector_unavailable:no_such_detector" in {f["finding_id"] for f in rep["findings"]}
+
+
+def test_gate_hook_called_with_report_and_code(write_cfg, tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from leakage_guard.config import load_config
+    from leakage_guard.orchestrator import run_guard
+
+    seen: list[tuple[str, int]] = []
+
+    class Hook:
+        def on_gate(self, report, code) -> None:  # type: ignore[no-untyped-def]
+            seen.append((report.gate, code))
+
+    cfg_path = write_cfg("leaky")
+    cfg = load_config(cfg_path)
+    _, code = run_guard(cfg, cfg_path.parent, tmp_path / "o", [], hooks=[Hook()])
+    assert len(seen) == 1 and seen[0][1] == code == 1

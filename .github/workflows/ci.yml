@@ -1,0 +1,61 @@
+# NOTE: GitHub only reads workflows at the repository root. If leakage-guard lives in a monorepo
+# subfolder, move this file to <root>/.github/workflows/ and keep `working-directory` below.
+name: leakage-guard
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 1"   # weekly: pin-compat job only
+defaults:
+  run:
+    working-directory: leakage-guard
+jobs:
+  core:
+    if: github.event_name != 'schedule'
+    strategy: { matrix: { python: ["3.11", "3.12"] } }
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv venv --python ${{ matrix.python }} .venv && uv pip install --python .venv/bin/python --require-hashes --no-deps -r locks/core.lock && uv pip install --python .venv/bin/python --no-deps -e .
+      - run: .venv/bin/ruff check src tests && .venv/bin/ruff format --check src tests
+      - run: .venv/bin/mypy
+      - run: .venv/bin/pytest -q -m "not deepchecks and not ppscore and not cleanlab" --ignore=tests/integration/test_e2e.py --ignore=tests/compat --cov --cov-fail-under=85
+  env-dc:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv venv --python 3.11 .envs/dc && uv pip install --python .envs/dc/bin/python --require-hashes --no-deps -r locks/dc.lock && uv pip install --python .envs/dc/bin/python --no-deps -e .
+      - run: .envs/dc/bin/pytest -q tests/detectors -m "deepchecks or ppscore"
+  env-cl:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv venv --python 3.12 .envs/cl && uv pip install --python .envs/cl/bin/python --require-hashes --no-deps -r locks/cl.lock && uv pip install --python .envs/cl/bin/python --no-deps -e .
+      - run: .envs/cl/bin/pytest -q tests/detectors -m cleanlab
+  e2e:
+    if: github.event_name != 'schedule'
+    needs: [core, env-dc, env-cl]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: |
+          for e in core:3.12 dc:3.11 cl:3.12; do n=${e%%:*}; v=${e##*:}
+            d=.venv; [ $n != core ] && d=.envs/$n
+            uv venv --python $v $d && uv pip install --python $d/bin/python --require-hashes --no-deps -r locks/$n.lock && uv pip install --python $d/bin/python --no-deps -e .
+          done
+      - run: .venv/bin/pytest -q tests/integration
+  # AC-6: environments rebuild from lockfiles (jobs above install with --require-hashes).
+  pin-compat:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv venv .venv && uv pip install --python .venv/bin/python -e '.[dev]'
+      - run: .venv/bin/pytest -q tests/compat -m compat

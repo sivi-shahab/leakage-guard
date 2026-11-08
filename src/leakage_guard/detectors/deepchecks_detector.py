@@ -30,11 +30,38 @@ def _find(results: list[Any], check_name: str, header_part: str | None = None) -
     return None
 
 
+def warn_if_pins_unmet() -> None:
+    """Warn (not fail) when numpy/pyarrow break the tested pins, e.g. in a shared environment."""
+    from importlib import metadata
+
+    np_major = int(metadata.version("numpy").split(".")[0])
+    pa = metadata.version("pyarrow") if _has("pyarrow") else "0"
+    pa_t = tuple(int(x) for x in pa.split(".")[:3] if x.isdigit())
+    if np_major >= 2 or pa_t > (19, 0, 1):
+        log.warning(
+            "deepchecks pins not met (numpy=%s, pyarrow=%s; need numpy<2, pyarrow<=19.0.1). "
+            "Use the dedicated environment.",
+            metadata.version("numpy"),
+            pa,
+        )
+
+
+def _has(dist: str) -> bool:
+    from importlib import metadata
+
+    try:
+        metadata.version(dist)
+    except metadata.PackageNotFoundError:
+        return False
+    return True
+
+
 @register
 class DeepchecksDetector:
     name = NAME
 
     def run(self, ctx: DetectorContext) -> list[RawFinding]:
+        warn_if_pins_unmet()
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")

@@ -45,7 +45,9 @@ markers = [
     "deepchecks: butuh environment Deepchecks",
     "ppscore: butuh environment ppscore",
     "cleanlab: butuh environment Cleanlab",
+    "compat: tes kompatibilitas pin terjadwal (butuh jaringan), bukan CI default",
 ]
+addopts = "-m 'not compat'"
 
 [tool.coverage.run]
 source = ["leakage_guard"]
@@ -59,7 +61,7 @@ src = ["src", "tests"]
 select = ["E", "F", "I", "B", "UP", "SIM", "S", "BLE"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "E501"]
+"tests/**" = ["S101", "E501", "S603", "S607"]
 "src/leakage_guard/reasons/catalog.py" = ["E501"]
 "examples/**" = ["S101"]
 
