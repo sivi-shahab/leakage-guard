@@ -67,6 +67,8 @@ class ThresholdsCfg(_Cfg):
     pps: Band = Band(warn=0.5, crit=0.8)
     identifier_label: Band = Band(warn=0.1, crit=0.2)
     adversarial: Band = Band(warn=0.70, crit=0.95)
+    # Design default, not calibrated: CV score gap, leaky-variant minus correct pipeline.
+    pipeline_gap: Band = Band(warn=0.02, crit=0.05)
     near_dup_cross_split: PctBand = PctBand(warn_pct=0.0, crit_pct=1.0)
     # Cleanlab near-duplicate threshold (Cleanlab default, not calibrated; DECISIONS D9).
     near_dup_threshold: float = Field(default=0.13, gt=0)

@@ -34,3 +34,15 @@ Format: konteks, pilihan, alasan. Penyimpangan dari `SPEC.md` ditandai **[SPEC]*
 ## D9. Ambang near-duplicate Cleanlab 0,13 adalah default, belum dikalibrasi
 - Pilihan: `thresholds.near_dup_threshold` = 0,13 (default Cleanlab `near_duplicate`), `near_dup_cross_split` warn >0% / crit >=1% pasangan lintas split.
 - Alasan: tidak ada data nyata untuk kalibrasi. Basis ambang dibawa ke laporan sebagai "default pustaka" (D7). TODO(owner): kalibrasi pada data kredit nyata.
+
+## D10. Semgrep L6: rule diperketat, severity WARNING, environment terpisah
+- Pilihan: `rules/semgrep/ml-fit-before-split.yml` hanya menandai `fit_transform`/`fit` pada data yang kemudian masuk `train_test_split` atau `cross_val_*` (klausa `train_test_split` kini diimplementasikan). `severity: WARNING`. Semgrep dipasang di `.envs/sg` (di luar core).
+- Penyimpangan dari SPEC 6.2 **[SPEC]**: rule contoh SPEC (`pattern-not-inside: Pipeline(...)`) menandai pemakaian benar; diganti pola berurutan di atas.
+- Batas: heuristik intra-fungsi/berkas; tidak melacak data lewat fungsi lain atau atribut. Tuning pada kode nyata belum dilakukan.
+
+## D11. Pipeline integrity: gap skor CV, ambang desain
+- `thresholds.pipeline_gap` warn 0,02 / crit 0,05 (desain, belum dikalibrasi). Varian bocor = langkah preprocessing di-fit pada seluruh data, lalu CV estimator akhir. Artifact yang bukan `Pipeline` (>=2 langkah) atau tidak bisa di-clone memunculkan `TypeError` (bukan temuan).
+- Belum terhubung ke CLI/orkestrator: ini utilitas uji untuk dipanggil dari tes proyek model.
+
+## D12. Satuan split dalam hari
+- `prevention/splits` memakai hari; `purged_kfold` internal (bukan skfolio). Konversi ke observasi untuk pustaka lain = hari × baris/hari.

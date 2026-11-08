@@ -1,0 +1,33 @@
+# Heuristic L6 rule (SPEC 6.2). WARNING until tuned on real code (spec-verification section 5).
+# Flags a learned transform fit on a dataset that is later split / cross-validated:
+#   X2 = scaler.fit_transform(X); ... train_test_split(X2, ...)   or   scaler.fit(X); ... train_test_split(X, ...)
+# Does NOT flag fit_transform on the training side after the split, nor Pipeline usage.
+rules:
+  - id: ml-fit-before-split
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Transformer di-fit sebelum split (fit_transform/fit pada data yang kemudian di-split atau
+      di-CV). Pindahkan ke dalam sklearn Pipeline.
+    pattern-either:
+      - pattern: |
+          $X2 = $T.fit_transform($D, ...)
+          ...
+          train_test_split(..., $X2, ...)
+      - pattern: |
+          $X2 = $T.fit_transform($D, ...)
+          ...
+          $CV($M, $X2, ...)
+      - pattern: |
+          $T.fit($D, ...)
+          ...
+          train_test_split(..., $D, ...)
+      - pattern: |
+          $X2 = $T.fit($D, ...).transform($D)
+          ...
+          train_test_split(..., $X2, ...)
+    metavariable-regex:
+      CV: ^(cross_val_score|cross_val_predict|cross_validate)$
+    metadata:
+      leakage_type: L6
+      threshold_basis: design
