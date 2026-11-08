@@ -49,6 +49,7 @@ def _population(n_customers: int, seed: int) -> pd.DataFrame:
     df["application_id"] = rng.permutation(n) + 100000
     for col in PII_COLUMNS:
         df[col] = [f"PII-MARKER-{col}-{i}" for i in range(n)]
+    df["region"] = rng.choice(["jakarta", "jabar", "jateng", "jatim", "sumatra"], n)  # mixed dtype
     return df
 
 

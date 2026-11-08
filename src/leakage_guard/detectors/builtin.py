@@ -16,41 +16,8 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 from leakage_guard.config import GuardConfig
 from leakage_guard.detectors.base import DetectorContext, register
-from leakage_guard.models import Metric, RawFinding, Scope, Severity
-from leakage_guard.reasons.catalog import THRESHOLD_BASIS
-
-_MAX_CLASSES = 20
-
-
-def _classify(value: float, warn: float, crit: float, *, warn_strict: bool) -> Severity | None:
-    if value >= crit:
-        return Severity.CRITICAL
-    if (value > warn) if warn_strict else (value >= warn):
-        return Severity.WARNING
-    return None
-
-
-def _raw(
-    check_id: str,
-    severity: Severity,
-    scope: Scope,
-    message: str,
-    *,
-    column: str | None = None,
-    metric: Metric | None = None,
-    evidence: dict[str, Any] | None = None,
-) -> RawFinding:
-    return RawFinding(
-        check_id=check_id,
-        severity=severity,
-        scope=scope,
-        column=column,
-        metric=metric,
-        threshold_basis=THRESHOLD_BASIS[check_id],
-        evidence=evidence or {},
-        source="builtin",
-        message=message,
-    )
+from leakage_guard.detectors.common import classify, is_classification, make_raw, sample
+from leakage_guard.models import Metric, RawFinding, Severity
 
 
 def _encode(s: pd.Series) -> npt.NDArray[np.float64]:
@@ -64,10 +31,6 @@ def _encode(s: pd.Series) -> npt.NDArray[np.float64]:
         return np.asarray(s.to_numpy(dtype=float, na_value=np.nan), dtype=np.float64)
     codes, _ = pd.factorize(s)
     return np.asarray(np.where(codes < 0, np.nan, codes), dtype=np.float64)
-
-
-def _is_classification(y: pd.Series) -> bool:
-    return not (pd.api.types.is_float_dtype(y) and y.nunique() > _MAX_CLASSES)
 
 
 def _cv_score(x: npt.NDArray[np.float64], y: Any, classification: bool, seed: int) -> float | None:
@@ -88,10 +51,6 @@ def _cv_score(x: npt.NDArray[np.float64], y: Any, classification: bool, seed: in
         cv = KFold(5, shuffle=True, random_state=seed)
         scoring = "r2"
     return float(np.mean(cross_val_score(model, X, y, cv=cv, scoring=scoring)))
-
-
-def _sample(df: pd.DataFrame, n: int, seed: int) -> pd.DataFrame:
-    return df.sample(n=n, random_state=seed) if len(df) > n else df
 
 
 def _top(scores: dict[str, float], n: int = 5) -> dict[str, float]:
@@ -121,12 +80,13 @@ class BuiltinDetector:
         n_dup = int(dup.sum())
         pct = 100.0 * n_dup / len(ctx.test)
         band = ctx.config.thresholds.row_overlap
-        sev = _classify(pct, band.warn_pct, band.crit_pct, warn_strict=True)
+        sev = classify(pct, band.warn_pct, band.crit_pct, warn_strict=True)
         if sev is None:
             return []
         thr = band.crit_pct if sev is Severity.CRITICAL else band.warn_pct
         return [
-            _raw(
+            make_raw(
+                "builtin",
                 "row_overlap",
                 sev,
                 "row",
@@ -151,7 +111,8 @@ class BuiltinDetector:
             return []
         pct = 100.0 * n_overlap / len(te)
         return [
-            _raw(
+            make_raw(
+                "builtin",
                 "group_overlap",
                 Severity.CRITICAL,
                 "entity",
@@ -173,11 +134,12 @@ class BuiltinDetector:
         out: list[RawFinding] = []
         pct = 100.0 * float((te < train_max).mean())
         band = ctx.config.thresholds.temporal
-        sev = _classify(pct, band.warn_pct, band.crit_pct, warn_strict=True)
+        sev = classify(pct, band.warn_pct, band.crit_pct, warn_strict=True)
         if sev is not None:
             thr = band.crit_pct if sev is Severity.CRITICAL else band.warn_pct
             out.append(
-                _raw(
+                make_raw(
+                    "builtin",
                     "temporal",
                     sev,
                     "time",
@@ -195,7 +157,8 @@ class BuiltinDetector:
         gap = (test_min - train_max).days
         if embargo > 0 and gap < embargo:
             out.append(
-                _raw(
+                make_raw(
+                    "builtin",
                     "temporal_embargo",
                     Severity.WARNING,
                     "time",
@@ -216,7 +179,8 @@ class BuiltinDetector:
         for col in ctx.roles.features:
             if col in forbidden:
                 out.append(
-                    _raw(
+                    make_raw(
+                        "builtin",
                         "blocklist_hit",
                         Severity.CRITICAL,
                         "feature",
@@ -228,7 +192,8 @@ class BuiltinDetector:
             hit = next((p for p in pats if p in col.lower()), None)
             if hit is not None:
                 out.append(
-                    _raw(
+                    make_raw(
+                        "builtin",
                         "suspicious_names",
                         Severity.WARNING,
                         "feature",
@@ -241,9 +206,9 @@ class BuiltinDetector:
 
     def _feature_scores(self, ctx: DetectorContext) -> tuple[dict[str, float], bool]:
         cfg = ctx.config
-        tr = _sample(ctx.train, cfg.runtime.max_rows, cfg.runtime.seed)
+        tr = sample(ctx.train, cfg.runtime.max_rows, cfg.runtime.seed)
         y_raw = tr[ctx.roles.target]
-        clf = _is_classification(y_raw)
+        clf = is_classification(y_raw)
         y = pd.factorize(y_raw)[0] if clf else y_raw.to_numpy(dtype=float)
         scores: dict[str, float] = {}
         for col in ctx.roles.features:
@@ -259,12 +224,13 @@ class BuiltinDetector:
         name = "cv_roc_auc" if clf else "cv_r2"
         out: list[RawFinding] = []
         for col, sc in scores.items():
-            sev = _classify(sc, band.warn, band.crit, warn_strict=False)
+            sev = classify(sc, band.warn, band.crit, warn_strict=False)
             if sev is None:
                 continue
             others = [v for c, v in scores.items() if c != col]
             out.append(
-                _raw(
+                make_raw(
+                    "builtin",
                     "single_feature",
                     sev,
                     "feature",
@@ -289,8 +255,8 @@ class BuiltinDetector:
         cfg = ctx.config
         half = cfg.runtime.max_rows // 2
         feats = ctx.roles.features
-        tr = _sample(ctx.train[feats], half, cfg.runtime.seed)
-        te = _sample(ctx.test[feats], half, cfg.runtime.seed)
+        tr = sample(ctx.train[feats], half, cfg.runtime.seed)
+        te = sample(ctx.test[feats], half, cfg.runtime.seed)
         y = np.r_[np.zeros(len(tr), dtype=int), np.ones(len(te), dtype=int)]
         both = pd.concat([tr, te], ignore_index=True)
         band = cfg.thresholds.adversarial
@@ -301,11 +267,12 @@ class BuiltinDetector:
                 scores[col] = s
         out: list[RawFinding] = []
         for col, auc in scores.items():
-            sev = _classify(auc, band.warn, band.crit, warn_strict=False)
+            sev = classify(auc, band.warn, band.crit, warn_strict=False)
             if sev is None:
                 continue
             out.append(
-                _raw(
+                make_raw(
+                    "builtin",
                     "adversarial",
                     sev,
                     "feature",

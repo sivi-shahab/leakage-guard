@@ -205,12 +205,12 @@ def test_missing_detector_follows_allow_missing(
     write_cfg: Callable[..., Path], tmp_path: Path
 ) -> None:
     strict = write_cfg(
-        "clean", detectors={"enabled": ["builtin", "deepchecks"], "allow_missing": False}
+        "clean", detectors={"enabled": ["builtin", "no_such_detector"], "allow_missing": False}
     )
     assert main(["run", "--config", str(strict), "--out", str(tmp_path / "s")]) == 2
     lax = write_cfg(
-        "clean", detectors={"enabled": ["builtin", "deepchecks"], "allow_missing": True}
+        "clean", detectors={"enabled": ["builtin", "no_such_detector"], "allow_missing": True}
     )
     assert main(["run", "--config", str(lax), "--out", str(tmp_path / "l")]) == 0
     rep = json.loads((tmp_path / "l" / "report.json").read_text())
-    assert "detector_unavailable:deepchecks" in {f["finding_id"] for f in rep["findings"]}
+    assert "detector_unavailable:no_such_detector" in {f["finding_id"] for f in rep["findings"]}

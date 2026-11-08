@@ -26,6 +26,9 @@ THRESHOLD_BASIS: dict[str, ThresholdBasis] = {
     "blocklist_hit": "design",
     "adversarial": "design",
     "near_dup_cross_split": "design",
+    "label_errors": "design",
+    "date_shared": "design",
+    "pps_blind_spot": "design",
     "pipeline_integrity": "design",
     "detector_unavailable": "design",
     "orphan_waiver": "design",
@@ -45,6 +48,9 @@ LEAKAGE_TYPE: dict[str, str | None] = {
     "pipeline_integrity": "L6",
     "adversarial": "L7",
     "near_dup_cross_split": "L8",
+    "label_errors": "L8",
+    "date_shared": "L3",
+    "pps_blind_spot": None,
     "detector_unavailable": None,
     "orphan_waiver": None,
     "quasi_identifier_risk": None,
@@ -91,10 +97,10 @@ CATALOG: dict[str, ReasonTemplate] = {
         evidence_keys=frozenset({"n_duplicate_rows", "pct_test_rows", "n_columns_compared"}),
     ),
     "group_overlap": ReasonTemplate(
-        summary="{n_entities_overlap} entitas muncul di train dan test.",
+        summary="{pct_test_entities:.2f}% data test memakai entitas yang juga ada di train.",
         why_leakage=(
-            "Sebanyak {n_entities_overlap} entitas ({pct_test_entities:.2f}% dari entitas test) muncul "
-            "di kedua split. Perilaku dan profil entitas itu ikut terbawa, sehingga model bisa mengenali "
+            "Sebesar {pct_test_entities:.2f}% data test memakai entitas yang juga muncul di train. "
+            "Perilaku dan profil entitas itu ikut terbawa, sehingga model bisa mengenali "
             "entitasnya, bukan mempelajari pola risiko. Sampel test tidak independen."
         ),
         impact=_IMPACT,
@@ -107,7 +113,7 @@ CATALOG: dict[str, ReasonTemplate] = {
             "Pastikan tiap entitas hanya berada di satu split",
         ),
         verification_question="Apakah satu entitas boleh muncul di train dan test menurut desain validasi?",
-        evidence_keys=frozenset({"n_entities_overlap", "pct_test_entities"}),
+        evidence_keys=frozenset({"pct_test_entities"}),
     ),
     "temporal": ReasonTemplate(
         summary="{pct_test_before_train_max:.2f}% baris test lebih lama dari data train terakhir.",
@@ -242,6 +248,45 @@ CATALOG: dict[str, ReasonTemplate] = {
         remediation=("Split berbasis entitas atau waktu", "Dedup near-duplicate sebelum split"),
         verification_question="Apakah sampel-sampel ini merepresentasikan entitas yang sama?",
         evidence_keys=frozenset({"n_sets_cross_split", "pct_test_rows"}),
+    ),
+    "label_errors": ReasonTemplate(
+        summary="{n_label_issues} baris train diduga salah label.",
+        why_leakage=(
+            "Cleanlab menandai {n_label_issues} baris train ({pct_train_rows:.2f}%) sebagai kemungkinan "
+            "salah label. Ini masalah kualitas label, bukan kebocoran antar split; dilaporkan sebagai "
+            "informasi dan tidak memblokir."
+        ),
+        impact="Label yang salah menurunkan kualitas model dan membuat evaluasi tidak andal.",
+        likely_root_causes=("Kesalahan pelabelan", "Definisi target tidak konsisten antar periode"),
+        remediation=("Tinjau sampel yang ditandai bersama pemilik data",),
+        verification_question="Apakah definisi target konsisten untuk seluruh periode data?",
+        evidence_keys=frozenset({"n_label_issues", "pct_train_rows"}),
+    ),
+    "date_shared": ReasonTemplate(
+        summary="{pct_test_dates_shared:.1f}% tanggal test juga ada di train.",
+        why_leakage=(
+            "Sebesar {pct_test_dates_shared:.1f}% tanggal di test juga muncul di train. Metrik ini "
+            "mengukur tanggal bersama, bukan urutan waktu, dan menyala pada hampir semua split acak. "
+            "Gunakan `temporal` untuk memeriksa apakah test lebih lama dari train."
+        ),
+        impact="Indikasi pendukung bahwa split tidak memisahkan periode.",
+        likely_root_causes=("Random split pada data berurutan waktu",),
+        remediation=("Gunakan split out-of-time", "Tambahkan embargo"),
+        verification_question="Apakah split dimaksudkan memisahkan periode waktu?",
+        evidence_keys=frozenset({"pct_test_dates_shared"}),
+    ),
+    "pps_blind_spot": ReasonTemplate(
+        summary="PPS tidak dapat menilai kolom ID {column}.",
+        why_leakage=(
+            "Kolom `{column}` bertipe kategorikal/string dengan nilai unik, sehingga PPS selalu "
+            "bernilai 0 dan tidak dapat mendeteksi korelasi ID dengan target. Ini batasan alat, bukan "
+            "temuan kebocoran."
+        ),
+        impact="Kebocoran lewat ID string tidak terdeteksi oleh PPS.",
+        likely_root_causes=("ID bertipe string",),
+        remediation=("Gunakan detektor lain atau ubah ID menjadi numerik berurutan untuk diuji",),
+        verification_question="Apakah ID ini berurutan dan menyandi waktu atau kanal?",
+        evidence_keys=frozenset({"id_dtype"}),
     ),
     "pipeline_integrity": ReasonTemplate(
         summary="Selisih skor CV pipeline benar vs varian bocor = {score_gap:.3f}.",

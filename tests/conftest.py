@@ -64,3 +64,16 @@ def write_cfg(data_dir: Path, tmp_path: Path) -> Callable[..., Path]:
         return p
 
     return _write
+
+
+def external_python(name: str) -> str | None:
+    """Interpreter of a dedicated environment: $LG_PY_<NAME> or ``.envs/<name>/bin/python``."""
+    import os
+
+    env = os.environ.get(f"LG_PY_{name.upper()}")
+    cand = (
+        Path(env)
+        if env
+        else Path(__file__).resolve().parents[1] / ".envs" / name / "bin" / "python"
+    )
+    return str(cand) if cand.is_file() else None

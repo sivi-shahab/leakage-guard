@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol, TypeVar
 
 import pandas as pd
@@ -20,6 +21,7 @@ class DetectorContext:
     test: pd.DataFrame
     roles: Roles
     config: GuardConfig
+    attach_dir: Path | None = None  # where a detector may write report attachments (e.g. HTML)
 
 
 class Detector(Protocol):

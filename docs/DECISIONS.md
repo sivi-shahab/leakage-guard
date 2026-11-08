@@ -27,5 +27,10 @@ Format: konteks, pilihan, alasan. Penyimpangan dari `SPEC.md` ditandai **[SPEC]*
 ## D7. Basis ambang dibawa sampai laporan
 - `RawFinding.threshold_basis` dan teks alasan menyebut apakah ambang default Deepchecks, desain, atau terkalibrasi. Dapat di-override lewat `thresholds_basis` di config.
 
-## D8. Detektor eksternal belum ada di Milestone 1
-- `detectors.enabled` yang memuat nama selain `builtin` menghasilkan exit 2, atau WARNING `detector_unavailable` bila `allow_missing: true`. Interpreter di `environments.<name>` memicu error "belum diimplementasikan" sampai Milestone 2.
+## D8. Detektor eksternal berjalan sebagai subprocess (Milestone 2)
+- Pilihan: `deepchecks`, `ppscore`, `cleanlab` dijalankan oleh `leakage_guard.runners.<nama>` di interpreter `environments.<nama>` (`.envs/dc` untuk deepchecks+ppscore, `.envs/cl` untuk cleanlab). Hasil dikembalikan sebagai JSON; crash/timeout runner menghasilkan exit 2. Interpreter tidak ditemukan: exit 2, atau WARNING `detector_unavailable` bila `allow_missing: true`.
+- Alasan: pin Deepchecks (pandas<2.3, dll.) bentrok dengan Cleanlab; isolasi proses memperbolehkan keduanya.
+
+## D9. Ambang near-duplicate Cleanlab 0,13 adalah default, belum dikalibrasi
+- Pilihan: `thresholds.near_dup_threshold` = 0,13 (default Cleanlab `near_duplicate`), `near_dup_cross_split` warn >0% / crit >=1% pasangan lintas split.
+- Alasan: tidak ada data nyata untuk kalibrasi. Basis ambang dibawa ke laporan sebagai "default pustaka" (D7). TODO(owner): kalibrasi pada data kredit nyata.
