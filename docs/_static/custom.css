@@ -1,0 +1,6 @@
+/* Hero block on the landing page, in the spirit of the Zipline docs. */
+.lg-hero{padding:1.5rem 0 .5rem}
+.lg-hero h1{font-size:2.6rem;margin-bottom:.25rem}
+.lg-tagline{font-size:1.2rem;color:var(--pst-color-text-muted)}
+.sd-card .sd-card-title{font-size:1.05rem}
+html[data-theme="dark"] img.only-light,html[data-theme="light"] img.only-dark{display:none}

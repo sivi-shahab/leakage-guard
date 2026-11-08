@@ -1,8 +1,35 @@
 # leakage-guard
 
-**A quality gate that detects, explains and blocks data leakage in tabular ML pipelines.**
+```{div} lg-tagline
+A quality gate that detects, explains and blocks data leakage in tabular ML pipelines.
+```
 
 leakage-guard runs several detectors on a train/test pair, merges their findings into one schema, explains *why* each finding counts as leakage, applies time-limited waivers, and returns an exit code your CI/CD can act on. It was built for credit-scoring and AML models at Indonesian banks, but nothing in it is bank-specific.
+
+::::{grid} 1 2 2 4
+:gutter: 3
+
+:::{grid-item-card} Install
+:link: install
+:link-type: doc
+Environments, lockfiles and Docker.
+:::
+:::{grid-item-card} Quickstart
+:link: quickstart
+:link-type: doc
+Run the gate on synthetic data in minutes.
+:::
+:::{grid-item-card} Tutorial
+:link: tutorial
+:link-type: doc
+Worked examples with planted leakage.
+:::
+:::{grid-item-card} API reference
+:link: api-reference
+:link-type: doc
+`run_guard`, hooks and prevention utilities.
+:::
+::::
 
 ```{image} architecture-diagram.png
 :alt: leakage-guard architecture

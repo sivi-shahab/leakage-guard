@@ -30,13 +30,26 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable", None),
 }
 
-html_theme = "furo"
+html_theme = "pydata_sphinx_theme"
 html_title = "leakage-guard"
 html_static_path = ["_static"]
-html_theme_options = {
-    "source_repository": "https://github.com/OWNER/REPO/",  # TODO(owner): set the real repository
-    "source_branch": "main",
-    "source_directory": "leakage-guard/docs/",
-    "light_css_variables": {"color-brand-primary": "#2b5fd9", "color-brand-content": "#2b5fd9"},
-    "dark_css_variables": {"color-brand-primary": "#7aa2ff", "color-brand-content": "#7aa2ff"},
+html_css_files = ["custom.css"]
+html_context = {
+    "github_user": "sivi-shahab",
+    "github_repo": "leakage-guard",
+    "github_version": "main",
+    "doc_path": "data-leakage/leakage-guard/docs",
 }
+html_theme_options = {
+    "github_url": "https://github.com/sivi-shahab/leakage-guard",
+    "navbar_align": "left",
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
+    "header_links_before_dropdown": 6,
+    "show_toc_level": 2,
+    "navigation_with_keys": False,
+    "use_edit_page_button": True,
+    "secondary_sidebar_items": ["page-toc", "edit-this-page"],
+    "footer_start": ["copyright"],
+    "footer_end": ["sphinx-version"],
+}
+html_sidebars = {"index": [], "**": ["sidebar-nav-bs"]}
