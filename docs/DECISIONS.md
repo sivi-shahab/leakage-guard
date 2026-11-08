@@ -46,3 +46,23 @@ Format: konteks, pilihan, alasan. Penyimpangan dari `SPEC.md` ditandai **[SPEC]*
 
 ## D12. Satuan split dalam hari
 - `prevention/splits` memakai hari; `purged_kfold` internal (bukan skfolio). Konversi ke observasi untuk pustaka lain = hari × baris/hari.
+
+## D13. Pengerasan (Milestone 4)
+- Lockfile: `uv pip compile --universal --python-version 3.11 --generate-hashes` dari `pyproject.toml` + extras (`locks/{core,dc,cl,sg}.lock`); dipasang dengan `--require-hashes --no-deps`, lalu paket sendiri `--no-deps`. Pin SPEC 3.3 terbukti terpilih (deepchecks 0.19.1, numpy 1.26.4, pandas 2.2.3, scikit-learn 1.5.2, pyarrow 19.0.1, setuptools 80.10.2).
+- Python 3.13 tidak didukung (`requires-python <3.13`); belum diuji.
+- CI: `.github/workflows/ci.yml` berada di dalam `leakage-guard/`; GitHub hanya membaca root repositori, jadi harus dipindah bila dipakai dalam monorepo. Belum pernah dijalankan di GitHub (hanya perintahnya yang diuji lokal).
+- Pin-compat: `tests/compat` (marker `compat`, dikecualikan dari default via `addopts`) memasang sklearn 1.8 / setuptools 82 / pandas 3 terhadap deepchecks 0.19.1; ketiganya masih gagal (sesuai dugaan).
+- Peringatan pin (numpy>=2, pyarrow>19.0.1) di `deepchecks_detector`: hanya kasus "diam di env yang benar" yang diuji.
+- `GateHook` (Protocol di `gate.py`, parameter `hooks` di `run_guard`); tanpa dependensi MLflow.
+- Docker: image dc (py3.11) dan cl (py3.12) dibangun dari lockfile, user non-root uid 10001, diuji import dengan `--network none`. Image tidak mengandung semgrep/env lain; satu image belum menjalankan ketiga detektor sekaligus (interpreter `environments.*` perlu diarahkan ke path di image).
+
+## Status akhir item SPEC bagian 5
+| Item | Status |
+|---|---|
+| Cleanlab pada data campuran | Terverifikasi pada data sintetis (kolom `region` kategorikal + numerik); skala via sampling `max_rows` |
+| Cleanlab/Deepchecks/ppscore pada jutaan baris | Terverifikasi lewat benchmark 1,01 juta baris (sampling 100.000 per detektor); bukan tanpa sampling |
+| Jalur regresi Deepchecks/ppscore | Masih asumsi (hanya klasifikasi diuji) |
+| Semgrep L6 | Klausa `train_test_split` diimplementasikan; 3/3 positif ditandai, 0 FP pada contoh negatif dan kode repo sendiri; belum dituning pada kode nyata; WARNING |
+| Ambang default | Masih asumsi/belum dikalibrasi; basis ambang dibawa ke laporan (D7, D9, D11) |
+| Target 15 menit / 1 juta baris | Terukur: 829 s (13,8 menit), 1.013.427 baris, `max_rows=100000`, 4 detektor, `--no-html`, varian bocor, WSL2. Diukur saat ada beban CPU lain (tes/lint paralel), jadi angka mungkin sedikit pesimistis; satu kali ukur |
+| Python 3.13 | Belum diuji, tidak didukung |
