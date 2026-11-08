@@ -23,7 +23,7 @@ make_env .venv 3.12 core; make_env .envs/dc 3.11 dc; make_env .envs/cl 3.12 cl
 .venv/bin/leakage-guard run --config examples/guard_m2.yaml --out out
 ```
 
-Exit code: `0` lolos, `1` ada CRITICAL tanpa waiver, `2` error runtime (fail-closed, termasuk interpreter hilang kecuali `detectors.allow_missing: true`). Perintah lain: `validate`, `explain`.
+Exit code: `0` lolos, `1` ada CRITICAL tanpa waiver, `2` error runtime (fail-closed, termasuk interpreter hilang kecuali `detectors.allow_missing: true`). Perintah lain: `validate-config`, `explain`, `version`; dokumentasi lengkap (Inggris): `docs/USAGE.md`.
 
 Docker (build dari lockfile, user non-root; jalankan tanpa jaringan): `docker/env-dc.Dockerfile`, `docker/env-cl.Dockerfile`.
 ```

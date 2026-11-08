@@ -16,3 +16,7 @@ CLI (cli.py) -> run_guard (orchestrator.py)
 - **Pencegahan** (`prevention/`, `rules/semgrep/`) berdiri sendiri; tidak dijalankan oleh `run`.
 - **Determinisme**: seed eksplisit (`runtime.seed`); dua run menghasilkan byte sama (AC-9).
 - **Keamanan/privasi**: tanpa jaringan saat runtime, tanpa `shell=True`/`eval`, `yaml.safe_load`, tidak ada nilai data di log/laporan (AC-5).
+
+![Architecture](architecture-diagram.png)
+
+Interactive version: `architecture-diagram.html` (self-contained). Dark: `architecture-diagram-dark.png`.
