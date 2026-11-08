@@ -1,6 +1,6 @@
 # leakage-guard
 
-Quality gate untuk mendeteksi dan menjelaskan data leakage di pipeline ML tabular (credit scoring, AML). Spesifikasi: `docs/SPEC.md` (v1.2); verifikasi sumber: `docs/spec-verification.md`; keputusan: `docs/DECISIONS.md`; arsitektur: `docs/ARCHITECTURE.md`.
+Quality gate untuk mendeteksi dan menjelaskan data leakage di pipeline ML tabular (credit scoring, AML). Spesifikasi: `docs/SPEC.md` (v1.2); verifikasi sumber: `docs/spec-verification.md`; keputusan: `docs/DECISIONS.md`; arsitektur: `docs/ARCHITECTURE.md`; **dokumentasi pengguna (Inggris): `docs/index.md`** (dibangun dengan Sphinx, dipublikasikan ke GitHub Pages lewat `.github/workflows/docs.yml`).
 
 **Status: Milestone 4** (detektor `builtin`, `deepchecks`, `ppscore`, `cleanlab`; utilitas pencegahan; semgrep L6; lockfile, Docker, CI).
 
@@ -23,7 +23,7 @@ make_env .venv 3.12 core; make_env .envs/dc 3.11 dc; make_env .envs/cl 3.12 cl
 .venv/bin/leakage-guard run --config examples/guard_m2.yaml --out out
 ```
 
-Exit code: `0` lolos, `1` ada CRITICAL tanpa waiver, `2` error runtime (fail-closed, termasuk interpreter hilang kecuali `detectors.allow_missing: true`). Perintah lain: `validate-config`, `explain`, `version`; dokumentasi lengkap (Inggris): `docs/USAGE.md`.
+Exit code: `0` lolos, `1` ada CRITICAL tanpa waiver, `2` error runtime (fail-closed, termasuk interpreter hilang kecuali `detectors.allow_missing: true`). Perintah lain: `validate-config`, `explain`, `version`; dokumentasi lengkap (Inggris, situs Sphinx): `docs/index.md`, build: `.envs/docs/bin/sphinx-build -b html docs docs/_build/html`.
 
 Docker (build dari lockfile, user non-root; jalankan tanpa jaringan): `docker/env-dc.Dockerfile`, `docker/env-cl.Dockerfile`.
 ```
