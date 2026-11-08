@@ -1,14 +1,27 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
 name = "leakage-guard"
 version = "0.1.0"
-description = "Quality gate untuk mendeteksi dan menjelaskan data leakage di pipeline ML tabular."
+description = "A quality gate that detects, explains and blocks data leakage in tabular ML pipelines."
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
-license = { text = "TODO(owner): pilih lisensi" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Sivi Almanaf A.S", email = "sivi.shahab@gmail.com" }]
+keywords = ["data-leakage", "machine-learning", "mlops", "data-quality", "credit-scoring", "ci"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
 dependencies = [
     "pandas>=2.2",
     "numpy>=1.26",
@@ -33,8 +46,17 @@ ppscore = ["ppscore==1.3.1"]
 cleanlab = ["cleanlab[datalab]>=2.9,<3"]
 dev = ["pytest>=8", "pytest-cov", "ruff", "mypy", "pandas-stubs", "types-PyYAML"]
 
+[project.urls]
+Homepage = "https://github.com/sivi-shahab/leakage-guard"
+Documentation = "https://sivi-shahab.github.io/leakage-guard/"
+Issues = "https://github.com/sivi-shahab/leakage-guard/issues"
+
 [project.scripts]
 leakage-guard = "leakage_guard.cli:main"
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "rules", "examples", "docs", "LICENSE", "README.md", "pyproject.toml"]
+exclude = ["docs/_build", "examples/data"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/leakage_guard"]

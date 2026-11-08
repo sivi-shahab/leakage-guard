@@ -3,6 +3,8 @@
 <p align="center">
   <a href="https://sivi-shahab.github.io/leakage-guard/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-2b5fd9"></a>
   <img alt="Python" src="https://img.shields.io/badge/python-3.11%20%7C%203.12-blue">
+  <a href="https://pypi.org/project/leakage-guard/"><img alt="PyPI" src="https://img.shields.io/pypi/v/leakage-guard"></a>
+  <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue">
   <img alt="Status" src="https://img.shields.io/badge/status-milestone%204-green">
 </p>
 
@@ -19,15 +21,21 @@ leakage-guard runs several detectors on a train/test pair, merges their findings
 - **Waivers with expiry**, **PII dropped before detection**, **deterministic reports**, **hash-pinned lockfiles and Docker images**.
 - **Prevention tooling:** `time_split`, `group_split`, `purged_kfold`, a pipeline integrity test and a semgrep rule.
 
+## Install
+
+```bash
+pip install leakage-guard                 # core + built-in detector (Python 3.11 or 3.12)
+pip install "leakage-guard[ppscore]"      # optional detectors: ppscore, cleanlab, deepchecks
+```
+
+Deepchecks and Cleanlab have conflicting pins, so install them in **separate** environments and point `environments:` in your config at each interpreter (see [install docs](docs/install.md)).
+
 ## Quick start
 
 ```bash
-uv venv --python 3.12 .venv
-uv pip install --python .venv/bin/python --require-hashes --no-deps -r locks/core.lock
-uv pip install --python .venv/bin/python --no-deps -e .
-
-.venv/bin/python examples/make_synthetic.py            # synthetic data with planted leakage
-.venv/bin/leakage-guard run --config examples/guard.yaml --out out
+git clone https://github.com/sivi-shahab/leakage-guard && cd leakage-guard
+python examples/make_synthetic.py                      # synthetic data with planted leakage
+leakage-guard run --config examples/guard.yaml --out out
 # gate=FAILED critical=8 warning=2 info=1 waived=0 -> out
 ```
 
@@ -68,4 +76,4 @@ Pushes to `main` publish to GitHub Pages via `.github/workflows/docs.yml` (Setti
 
 ## Status and limits
 
-Thresholds are design defaults, not yet calibrated on real portfolios. Reports are Indonesian only. License is not chosen yet (`TODO(owner)`). See [troubleshooting](docs/troubleshooting.md).
+Thresholds are design defaults, not yet calibrated on real portfolios. Reports are Indonesian only. Licensed under [Apache-2.0](LICENSE). See [troubleshooting](docs/troubleshooting.md).

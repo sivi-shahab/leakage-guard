@@ -9,3 +9,5 @@ examples/data/
 leakage-guard-out/
 .envs/
 docs/_build/
+dist/
+build/

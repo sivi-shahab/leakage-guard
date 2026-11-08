@@ -38,7 +38,7 @@ html_context = {
     "github_user": "sivi-shahab",
     "github_repo": "leakage-guard",
     "github_version": "main",
-    "doc_path": "data-leakage/leakage-guard/docs",
+    "doc_path": "docs",
 }
 html_theme_options = {
     "github_url": "https://github.com/sivi-shahab/leakage-guard",

@@ -1,5 +1,16 @@
 # Installation
 
+## From PyPI
+
+```bash
+pip install leakage-guard                 # core + built-in detector
+pip install "leakage-guard[ppscore]"      # or [cleanlab], [deepchecks]
+```
+
+Install the `deepchecks` and `cleanlab` extras in **separate** virtual environments (see below) and reference each interpreter from the `environments:` section of your config.
+
+## From source (reproducible, hash-pinned)
+
 Requirements: Python 3.11 or 3.12 (3.13 is **not** supported/tested), [`uv`](https://docs.astral.sh/uv/).
 
 Deepchecks and Cleanlab have conflicting pins, so there are separate environments, each rebuilt from a hash-pinned lockfile in `locks/`:
